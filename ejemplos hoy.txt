@@ -1,0 +1,149 @@
+paso 1
+
+CREATE DATABASE Legumbreria;
+USE Legumbreria;
+
+
+
+paso 2
+-- Tabla de productos
+CREATE TABLE productos (
+    id_producto INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    categoria VARCHAR(50) NOT NULL,
+    precio DECIMAL(10, 2) NOT NULL,
+    stock INT NOT NULL
+);
+
+-- Tabla de clientes
+CREATE TABLE clientes (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_cliente VARCHAR(100) NOT NULL,
+    direccion VARCHAR(200),
+    telefono VARCHAR(15)
+);
+
+-- Tabla de empleados
+CREATE TABLE empleados (
+    id_empleado INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_empleado VARCHAR(100) NOT NULL,
+    puesto VARCHAR(50)
+);
+
+-- Tabla de ventas
+CREATE TABLE ventas (
+    id_venta INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT,
+    id_empleado INT,
+    fecha_venta DATETIME,
+    total DECIMAL(10, 2),
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+    FOREIGN KEY (id_empleado) REFERENCES empleados(id_empleado)
+);
+
+-- Tabla de detalles de venta (productos vendidos en cada venta)
+CREATE TABLE detalle_venta (
+    id_detalle INT AUTO_INCREMENT PRIMARY KEY,
+    id_venta INT,
+    id_producto INT,
+    cantidad INT,
+    subtotal DECIMAL(10, 2),
+    FOREIGN KEY (id_venta) REFERENCES ventas(id_venta),
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+);
+
+paso 3
+
+-- Insertando productos
+INSERT INTO productos (nombre, categoria, precio, stock) VALUES 
+('Tomate', 'Verdura', 1.50, 100),
+('Lechuga', 'Verdura', 1.20, 150),
+('Cebolla', 'Verdura', 1.00, 200),
+('Zanahoria', 'Raíz', 1.40, 120);
+
+-- Insertando clientes
+INSERT INTO clientes (nombre_cliente, direccion, telefono) VALUES 
+('Juan Pérez', 'Av. Siempre Viva 123', '555-1234'),
+('Ana Gómez', 'Calle Falsa 456', '555-5678'),
+('Luis Martínez', 'Calle Real 789', '555-9876');
+
+-- Insertando empleados
+INSERT INTO empleados (nombre_empleado, puesto) VALUES 
+('Pedro Sánchez', 'Cajero'),
+('Maria López', 'Vendedor'),
+('Carlos Torres', 'Administrador');
+
+-- Insertando ventas
+INSERT INTO ventas (id_cliente, id_empleado, fecha_venta, total) VALUES 
+(1, 2, '2025-03-19 10:00:00', 10.50),
+(2, 1, '2025-03-19 11:30:00', 7.60);
+
+-- Insertando detalles de venta
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad, subtotal) VALUES 
+(1, 1, 3, 4.50),
+(1, 2, 2, 2.40),
+(2, 3, 5, 5.00);
+
+
+Paso 4 ; 
+
+(vistas)
+CREATE VIEW productos_mas_vendidos AS
+SELECT p.nombre, SUM(dv.cantidad) AS cantidad_vendida
+FROM detalle_venta dv
+JOIN productos p ON dv.id_producto = p.id_producto
+GROUP BY p.nombre
+ORDER BY cantidad_vendida DESC;
+
+
+
+--------------------
+
+DELIMITER $$
+
+CREATE PROCEDURE actualizar_stock(
+    IN p_id_producto INT,
+    IN p_nuevo_stock INT
+)
+BEGIN
+    UPDATE productos 
+    SET stock = p_nuevo_stock
+    WHERE id_producto = p_id_producto;
+END $$
+
+DELIMITER ;
+-----------------------------------------
+
+
+
+DELIMITER $$
+
+CREATE PROCEDURE total_ventas_empleado(
+    IN p_id_empleado INT
+)
+BEGIN
+    SELECT SUM(v.total) AS total_ventas
+    FROM ventas v
+    WHERE v.id_empleado = p_id_empleado;
+END $$
+
+DELIMITER ;
+-------------------------
+
+CREATE VIEW productos_disponibles AS
+SELECT nombre, categoria, stock
+FROM productos;
+-----------------------------
+
+
+CREATE VIEW ventas_recientes AS
+SELECT c.nombre_cliente, v.fecha_venta, v.total
+FROM ventas v
+JOIN clientes c ON v.id_cliente = c.id_cliente
+ORDER BY v.fecha_venta DESC;
+---------------------------------------------
+
+CREATE VIEW empleados_lista AS
+SELECT nombre_empleado, puesto
+FROM empleados;
+
